@@ -65,9 +65,6 @@ jobs:
           # By enabling continue-on-error on the coverage step, your workflow still uploads the coverage report even if the threshold isn’t met.
 
         - name: Archive Coverage Report
-          
-        
-
           if: always()
           # If you want the test results available on both success and failure, use always():
           
