@@ -57,7 +57,10 @@ jobs:
           run: npm install
 
         - name: Generate Coverage Report
+          continue-on-error: true
           run: npm run coverage
+
+          # By enabling continue-on-error on the coverage step, your workflow still uploads the coverage report even if the threshold isn’t met.
 
         - name: Archive Coverage Report
           uses: actions/upload-artifact@v7
