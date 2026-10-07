@@ -19,7 +19,7 @@ jobs:
         steps:
 
         - name: Checkout Repository
-          uses: actions/checkout@v4
+          uses: actions/checkout@v7
 
         - name: Setup NodeJS Version
           uses: actions/setup-node@v3
@@ -37,4 +37,31 @@ jobs:
           with:
             name: Mocha-Test-Result
             path: test-results.xml
+            retention-days: 5
 
+
+    code-coverage:
+      name: Code Coverage
+      runs-on: ubuntu-latest
+      steps:
+
+        - name: Checkout Repository
+          uses: actions/checkout@v7
+
+        - name: Setup NodeJS Version
+          uses: actions/setup-node@v3
+          with:
+            node-version: 20
+
+        - name: Install Dependencies
+          run: npm install
+
+        - name: Generate Coverage Report
+          run: npm run coverage
+
+        - name: Archive Coverage Report
+          uses: actions/upload-artifact@v7
+          with:
+            name: Code-Coverage-Result
+            path: coverage
+            retention-days: 5
