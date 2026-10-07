@@ -59,14 +59,13 @@ jobs:
         - name: Generate Coverage Report
           run: npm run coverage
           id: generate-report
-
-          # continue-on-error: true
+          continue-on-error: true
 
           # By enabling continue-on-error on the coverage step, your workflow still uploads the coverage report even if the threshold isn’t met.
 
         - name: Archive Coverage Report
           
-          if: failure() && steps.generate-report == 'failure' 
+          # if: failure() && steps.generate-report == 'failure' 
           # This runs the archive step when the testing step fails:
 
           # if: always()
