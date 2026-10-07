@@ -66,8 +66,7 @@ jobs:
 
         - name: Archive Coverage Report
           
-          # if: failure() && steps.generate-report == 'failure' 
-          # This runs the archive step when the testing step fails:
+        
 
           if: always()
           # If you want the test results available on both success and failure, use always():
