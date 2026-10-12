@@ -16,7 +16,7 @@ jobs:
     unit-testing:
         name: Unit Testing
         runs-on: ubuntu-latest
-        
+
         steps:
 
         - name: Checkout Repository
@@ -26,6 +26,8 @@ jobs:
           uses: actions/setup-node@v3
           with:
             node-version: 20
+
+        # Caching Usage Step
 
         - name: Cache NPM dependencies
           uses: actions/cache@v3
@@ -61,6 +63,8 @@ jobs:
           with:
             node-version: 20
 
+        # Caching Usage Step
+
         - name: Cache NPM dependencies
           uses: actions/cache@v5
           with:
@@ -90,3 +94,47 @@ jobs:
             name: Code-Coverage-Result
             path: coverage
             retention-days: 5
+
+
+    docker:
+      name: Containerization
+      runs-on: ubuntu-latest
+      needs: [unit-testing, code-coverage]
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v7
+
+        - name: Docker Hub Login
+          uses: docker/login-action@v4
+          with:
+            username: ${{ vars.DOCKER_USERNAME }}
+            password: ${{ secrets.DOCKERPASSWORD }}
+
+        - name: Build Docker Image for Testing
+          uses: docker/build-push-action@v7
+          with:
+            context: .
+            push: false
+            tags: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+
+        
+        - name: Docker Image Testing
+          run: |
+            # List built images
+            docker images
+
+            # Run the container in detached mode
+            docker run --name solar-system-app -d \
+              -p 3000:3000 \
+              -e MONGO_URI=$MONGO_URI \
+              -e MONGO_USERNAME=$MONGO_USERNAME \
+              -e MONGO_PASSWORD=$MONGO_PASSWORD \
+              ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+
+            # Display container IP address
+            echo "Container IP:" $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+
+            # Test the /live endpoint
+            echo "Testing /live endpoint"
+            wget -q -O - http://127.0.0.1:3000/live | grep live
+
