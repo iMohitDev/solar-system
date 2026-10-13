@@ -17,6 +17,19 @@ jobs:
         name: Unit Testing
         runs-on: ubuntu-latest
 
+        services:
+          mongo-db:
+            image: siddharth67/mongo-db:non-prod
+            ports:
+              - 27017:27017
+# Mapping port 27017 on the host to the container lets your tests connect via localhost:27017.
+
+        env:
+          MONGO_URI: 'mongodb://localhost:27017/superData'
+          MONGO_USERNAME: non-prod-user
+          MONGO_PASSWORD: non-prod-password
+# Job-level env entries take precedence over workflow-level env values.
+
         steps:
 
         - name: Checkout Repository
@@ -53,6 +66,22 @@ jobs:
     code-coverage:
       name: Code Coverage
       runs-on: ubuntu-latest
+
+      container:
+        image: node:20
+
+      services:
+        mongo-db:
+          image: siddharth67/mongo-db:non-prod
+          options: --name mongo
+      env:
+        MONGO_URI: 'mongodb://mongo:27017/superData'
+        MONGO_USERNAME: non-prod-user
+        MONGO_PASSWORD: non-prod-password      
+      
+# Make sure the service container name (mongo) matches the hostname used in MONGO_URI. Incorrect naming can lead to connection failures.
+# Service Network Alias	mongo (used in MONGO_URI)  
+
       steps:
 
         - name: Checkout Repository
@@ -172,5 +201,3 @@ jobs:
             tags: |
               ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
               ghcr.io/${{ env.OWNER_LOWERCASE }}/solar-system:${{ github.sha }}
-
-
