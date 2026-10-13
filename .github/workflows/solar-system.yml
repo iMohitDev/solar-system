@@ -216,6 +216,11 @@ jobs:
           with:
             version: 'v1.26.0'
 
+        - name: Configure Kubeconfig
+          run: |
+            mkdir -p ~/.kube
+            echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > ~/.kube/config    
+
         - name: Fetch Kubernetes Cluster Details
           run: |
             kubectl version --short
