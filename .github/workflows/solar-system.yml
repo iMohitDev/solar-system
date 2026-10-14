@@ -307,13 +307,13 @@ jobs:
             run: kubectl apply -f kubernetes/development
 
           - name: Display Post deployment and secret
-            run: |    
+            run: |  
+              sleep 35s  
               kubectl -n development get all
               kubectl -n development get secrets
               kubectl -n development get ing
-              sleep 30s
-              curl -v solar-system-development.127.0.0.1.nip.io
-              sleep 10s
+              curl -v https://solar-system-development.127.0.0.1.nip.io
+              
 
 
               
