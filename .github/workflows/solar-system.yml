@@ -203,29 +203,69 @@ jobs:
 #               ghcr.io/${{ env.OWNER_LOWERCASE }}/solar-system:${{ github.sha }}
 
            
-    dev-deploy:
-      name: Deploy to Development Cluster
-      #needs: docker
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout Repo
-          uses: actions/checkout@v7
+#     dev-deploy:
+#       name: Deploy to Development Cluster
+#       #needs: docker
+#       runs-on: ubuntu-latest
+#       steps:
+#         - name: Checkout Repo
+#           uses: actions/checkout@v7
 
-        - name: Install kubectl CLI
-          uses: azure/setup-kubectl@v4
-          with:
-            version: 'v1.26.0'
+#         - name: Install kubectl CLI
+#           uses: azure/setup-kubectl@v4
+#           with:
+#             version: 'v1.26.0'
 
-        - name: Configure Kubeconfig
-          run: |
-            mkdir -p ~/.kube
-            echo "${{ secrets.KUBECONFIG_DATA }}"  ~/.kube/config
-#            echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > ~/.kube/config
+#         - name: Configure Kubeconfig
+#           run: |
+#             mkdir -p ~/.kube
+#             echo "${{ secrets.KUBECONFIG_DATA }}"  ~/.kube/config
+# #            echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > ~/.kube/config
             
 
-        - name: Fetch Kubernetes Cluster Details
-          run: |
-            kubectl version --short
-            echo "------------------------------"
-            kubectl get nodes
+#         - name: Fetch Kubernetes Cluster Details
+#           run: |
+#             kubectl version --short
+#             echo "------------------------------"
+#             kubectl get nodes
             
+      kubernetes:
+        name: Create Kubernetes Cluster
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Install kubectl CLI
+            uses: azure/setup-kubectl@v4
+            with:
+              version: latest
+
+          - name: Install Kind
+            run: |
+              curl -fLo kind \
+                https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
+              chmod +x kind
+              sudo mv kind /usr/local/bin/kind
+
+          - name: Create Kubernetes Cluster
+            run: |
+              kind create cluster --name github-lab --wait 120s
+
+          - name: Verify Kubeconfig
+            run: |
+              kubectl config current-context
+              kubectl config get-contexts
+              test -s "$HOME/.kube/config"
+
+          - name: Get Kubernetes Nodes
+            run: |
+              kubectl get nodes -o wide
+
+          - name: Deploy Nginx
+            run: |
+              kubectl create deployment nginx \
+                --image=nginx:alpine
+
+              kubectl rollout status deployment/nginx \
+                --timeout=120s
+
+              kubectl get pods
