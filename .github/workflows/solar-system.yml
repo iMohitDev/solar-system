@@ -314,6 +314,12 @@ jobs:
               kubectl -n development get ing
               curl -v https://solar-system-development.127.0.0.1.nip.io
               
+          - name: Diagnose image pull failure
+            if: always()
+            env:
+              NAMESPACE: ${{ vars.NAMESPACE }}
+            run: |
+              kubectl -n "$NAMESPACE" describe pods -l app=solar-system
 
 
               
