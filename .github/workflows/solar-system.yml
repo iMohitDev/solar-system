@@ -225,6 +225,13 @@ jobs:
           - name: Create Kubernetes Cluster
             run: |
               kind create cluster --name github-lab --wait 120s
+          
+          - name: Create application namespace
+            env:
+              NAMESPACE: ${{ vars.NAMESPACE }}
+            run: |
+              kubectl create namespace "$NAMESPACE" \
+                --dry-run=client -o yaml | kubectl apply -f -
 
           - name: Verify Kubeconfig
             run: |
@@ -300,5 +307,5 @@ jobs:
               kubectl -n development get secrets
               kubectl -n development get ing
 
-              
+
               
