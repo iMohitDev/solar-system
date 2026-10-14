@@ -4,9 +4,9 @@ metadata:
   labels:
     app: solar-system
   name: solar-system
-  namespace: _{_NAMESPACE_}_
+  namespace: {_NAMESPACE_}
 spec:
-  replicas: _{_REPLICAS_}_
+  replicas: {_REPLICAS_}
   selector:
     matchLabels:
       app: solar-system
@@ -17,7 +17,7 @@ spec:
         app: solar-system
     spec:
       containers:
-      - image: _{_IMAGE_}_
+      - image: {_IMAGE_}
         imagePullPolicy: Always
         name: solar-system
         ports:
