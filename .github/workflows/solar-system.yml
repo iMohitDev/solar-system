@@ -127,208 +127,208 @@ jobs:
 #             retention-days: 5
 
 
-    docker:
-      name: Containerization
-      runs-on: ubuntu-latest
-      permissions:
-        packages: write
-      # needs: [unit-testing, code-coverage]
-      steps:
+    # docker:
+    #   name: Containerization
+    #   runs-on: ubuntu-latest
+    #   permissions:
+    #     packages: write
+    #   needs: [unit-testing, code-coverage]
+    #   steps:
 
-        - name: Checkout Repository
-          uses: actions/checkout@v7
+    #     - name: Checkout Repository
+    #       uses: actions/checkout@v7
 
         
-        # 1. Login to the Docker Hub and GHCR  
+    #     # 1. Login to the Docker Hub and GHCR  
 
-        - name: Docker Hub Login
-          uses: docker/login-action@v4
-          with:
-            username: ${{ vars.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
+    #     - name: Docker Hub Login
+    #       uses: docker/login-action@v4
+    #       with:
+    #         username: ${{ vars.DOCKER_USERNAME }}
+    #         password: ${{ secrets.DOCKER_PASSWORD }}
         
-        - name: GHCR Login
-          uses: docker/login-action@v4
-          with:
-            registry: ghcr.io
-            username: ${{ github.repository_owner }}
-            password: ${{ secrets.GITHUB_TOKEN }}        
+    #     - name: GHCR Login
+    #       uses: docker/login-action@v4
+    #       with:
+    #         registry: ghcr.io
+    #         username: ${{ github.repository_owner }}
+    #         password: ${{ secrets.GITHUB_TOKEN }}        
 
 
-        # 2. Build the Docker image without pushing
+    #     # 2. Build the Docker image without pushing
 
-        - name: Build Docker Image for Testing
-          uses: docker/build-push-action@v7
-          with:
-            context: .
-            push: false
-            tags: ${{ vars.DOCKER_USERNAME }}/solar-system:latest
+    #     - name: Build Docker Image for Testing
+    #       uses: docker/build-push-action@v7
+    #       with:
+    #         context: .
+    #         push: false
+    #         tags: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
 
        
-        # 3. Run tests against the local image
+    #     # 3. Run tests against the local image
 
-        - name: Docker Image Testing
-          run: |
-            # List built images
-            docker images
+    #     - name: Docker Image Testing
+    #       run: |
+    #         # List built images
+    #         docker images
 
-            # Run the container in detached mode
-            docker run --name solar-system-app -d \
-              -p 3000:3000 \
-              -e MONGO_URI=$MONGO_URI \
-              -e MONGO_USERNAME=$MONGO_USERNAME \
-              -e MONGO_PASSWORD=$MONGO_PASSWORD \
-              ${{ vars.DOCKER_USERNAME }}/solar-system:latest
+    #         # Run the container in detached mode
+    #         docker run --name solar-system-app -d \
+    #           -p 3000:3000 \
+    #           -e MONGO_URI=$MONGO_URI \
+    #           -e MONGO_USERNAME=$MONGO_USERNAME \
+    #           -e MONGO_PASSWORD=$MONGO_PASSWORD \
+    #           ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
 
-            # Display container IP address
-            echo "Container IP:" $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+    #         # Display container IP address
+    #         echo "Container IP:" $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
 
-            # Test the /live endpoint
-            echo "Testing /live endpoint"
-            wget -q -O - http://127.0.0.1:3000/live | grep live
+    #         # Test the /live endpoint
+    #         echo "Testing /live endpoint"
+    #         wget -q -O - http://127.0.0.1:3000/live | grep live
 
        
-          # 4. Push the tested image to Docker Hub
+    #       # 4. Push the tested image to Docker Hub
 
-        - name: Downcase repository owner
-          run: |
-              echo "OWNER_LOWERCASE=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+    #     - name: Downcase repository owner
+    #       run: |
+    #           echo "OWNER_LOWERCASE=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
         
-        - name: Docker Push
-          uses: docker/build-push-action@v7
-          with:
-            context: .
-            push: true                    # enable push to registry
-            tags: |
-              ${{ vars.DOCKER_USERNAME }}/solar-system:latest
-              ghcr.io/${{ env.OWNER_LOWERCASE }}/solar-system:latest
+    #     - name: Docker Push
+    #       uses: docker/build-push-action@v7
+    #       with:
+    #         context: .
+    #         push: true                    # enable push to registry
+    #         tags: |
+    #           ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+    #           ghcr.io/${{ env.OWNER_LOWERCASE }}/solar-system:${{ github.sha }}
 
 
-#       dev-deploy:
-#         name: Create Kubernetes Cluster
-#         runs-on: ubuntu-latest
+      dev-deploy:
+        name: Create Kubernetes Cluster
+        runs-on: ubuntu-latest
 
-#         env:
-#           NAMESPACE: ${{ vars.NAMESPACE }}
-#           REPLICAS: ${{ vars.REPLICAS }}
-#           IMAGE: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
-# #          INGRESS_IP: ${{ env.INGRESS_IP }}
+        env:
+          NAMESPACE: ${{ vars.NAMESPACE }}
+          REPLICAS: ${{ vars.REPLICAS }}
+          IMAGE: ${{ vars.DOCKER_USERNAME }}/solar-system:latest
+#          INGRESS_IP: ${{ env.INGRESS_IP }}
 
-#         steps:
+        steps:
           
-#           - name: Docker Hub Login
-#             uses: docker/login-action@v4
-#             with:
-#               username: ${{ vars.DOCKER_USERNAME }}
-#               password: ${{ secrets.DOCKER_PASSWORD }}
+          - name: Docker Hub Login
+            uses: docker/login-action@v4
+            with:
+              username: ${{ vars.DOCKER_USERNAME }}
+              password: ${{ secrets.DOCKER_PASSWORD }}
           
-#           - name: Install kubectl CLI
-#             uses: azure/setup-kubectl@v4
-#             with:
-#               version: latest
+          - name: Install kubectl CLI
+            uses: azure/setup-kubectl@v4
+            with:
+              version: latest
 
-#           - name: Install Kind
-#             run: |
-#               curl -fLo kind \
-#                 https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
-#               chmod +x kind
-#               sudo mv kind /usr/local/bin/kind
+          - name: Install Kind
+            run: |
+              curl -fLo kind \
+                https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
+              chmod +x kind
+              sudo mv kind /usr/local/bin/kind
 
-#           - name: Create Kubernetes Cluster
-#             run: |
-#               kind create cluster --name github-lab --wait 120s
+          - name: Create Kubernetes Cluster
+            run: |
+              kind create cluster --name github-lab --wait 120s
           
-#           - name: Create application namespace
-#             env:
-#               NAMESPACE: ${{ vars.NAMESPACE }}
-#             run: |
-#               kubectl create namespace "$NAMESPACE" \
-#                 --dry-run=client -o yaml | kubectl apply -f -
+          - name: Create application namespace
+            env:
+              NAMESPACE: ${{ vars.NAMESPACE }}
+            run: |
+              kubectl create namespace "$NAMESPACE" \
+                --dry-run=client -o yaml | kubectl apply -f -
 
-#           - name: Verify Kubeconfig
-#             run: |
-#               kubectl config current-context
-#               kubectl config get-contexts
-#               test -s "$HOME/.kube/config"
+          - name: Verify Kubeconfig
+            run: |
+              kubectl config current-context
+              kubectl config get-contexts
+              test -s "$HOME/.kube/config"
 
-#           - name: Get Kubernetes Nodes
-#             run: |
-#               kubectl get nodes -o wide
+          - name: Get Kubernetes Nodes
+            run: |
+              kubectl get nodes -o wide
 
-#           - name: Deploy Nginx
-#             run: |
-#               kubectl get pods
-#               echo
-#               cat /etc/os-release
-#               echo
-#               free -h
+          - name: Deploy Nginx
+            run: |
+              kubectl get pods
+              echo
+              cat /etc/os-release
+              echo
+              free -h
           
-#           - name: Checkout repository
-#             uses: actions/checkout@v7
+          - name: Checkout repository
+            uses: actions/checkout@v7
 
-#           # - name: Save NGINX Ingress Controller IP
-#           #   id: save_ingress_ip
-#           #   run: |
-#           #     echo "INGRESS_IP=$(kubectl -n ingress-nginx \
-#           #       get svc ingress-nginx-controller \
-#           #       -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
+          # - name: Save NGINX Ingress Controller IP
+          #   id: save_ingress_ip
+          #   run: |
+          #     echo "INGRESS_IP=$(kubectl -n ingress-nginx \
+          #       get svc ingress-nginx-controller \
+          #       -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
 
 
-#           - name: Set ingress address for runner-local access
-#             run: |
-#               echo "INGRESS_IP=127.0.0.1" >> "$GITHUB_ENV"
+          - name: Set ingress address for runner-local access
+            run: |
+              echo "INGRESS_IP=127.0.0.1" >> "$GITHUB_ENV"
           
 
-#           - name: Replace tokens in Kubernetes manifests
-#             uses: cschleiden/replace-tokens@v1
-#             with:
-#               tokenPrefix: '{_'
-#               tokenSuffix: '_}'
-#               files: 'kubernetes/development/*.yaml'
+          - name: Replace tokens in Kubernetes manifests
+            uses: cschleiden/replace-tokens@v1
+            with:
+              tokenPrefix: '{_'
+              tokenSuffix: '_}'
+              files: 'kubernetes/development/*.yaml'
 
 
-#           - name: Verify token replacement
-#             run: |
-#               echo "=== deployment.yaml ==="
-#               cat kubernetes/development/deployment.yaml
-#               echo "=== service.yaml ==="
-#               cat kubernetes/development/service.yaml
-#               echo "=== ingress.yaml ==="
-#               cat kubernetes/development/ingress.yaml
+          - name: Verify token replacement
+            run: |
+              echo "=== deployment.yaml ==="
+              cat kubernetes/development/deployment.yaml
+              echo "=== service.yaml ==="
+              cat kubernetes/development/service.yaml
+              echo "=== ingress.yaml ==="
+              cat kubernetes/development/ingress.yaml
 
-#           - name: Create MongoDB secret
-#             run: |
-#               kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
-#                 --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
-#                 --from-literal=MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
-#                 --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
-#                 --save-config \
-#                 --dry-run=client \
-#                 -o yaml | kubectl apply -f -
+          - name: Create MongoDB secret
+            run: |
+              kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
+                --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
+                --from-literal=MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
+                --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
+                --save-config \
+                --dry-run=client \
+                -o yaml | kubectl apply -f -
           
-#           - name: Display Pre deployment and secret
-#             run: |    
-#               kubectl -n development get all
-#               kubectl -n development get secrets
+          - name: Display Pre deployment and secret
+            run: |    
+              kubectl -n development get all
+              kubectl -n development get secrets
 
-#           - name: Deploy manifests
-#             run: kubectl apply -f kubernetes/development
+          - name: Deploy manifests
+            run: kubectl apply -f kubernetes/development
 
-#           - name: Display Post deployment and secret
-#             run: |  
-#               sleep 35s  
-#               kubectl -n development get all
-#               kubectl -n development get secrets
-#               kubectl -n development get ing
-#               curl -v https://solar-system-development.127.0.0.1.nip.io
+          - name: Display Post deployment and secret
+            run: |  
+              sleep 35s  
+              kubectl -n development get all
+              kubectl -n development get secrets
+              kubectl -n development get ing
+              curl -v https://solar-system-development.127.0.0.1.nip.io
               
-#           - name: Diagnose image pull failure
-#             if: always()
-#             env:
-#               NAMESPACE: ${{ vars.NAMESPACE }}
-#             run: |
-#               kubectl -n "$NAMESPACE" describe pods -l app=solar-system
+          - name: Diagnose image pull failure
+            if: always()
+            env:
+              NAMESPACE: ${{ vars.NAMESPACE }}
+            run: |
+              kubectl -n "$NAMESPACE" describe pods -l app=solar-system
 
 
               
