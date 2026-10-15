@@ -321,7 +321,20 @@ jobs:
               kubectl -n development get all
               kubectl -n development get secrets
               kubectl -n development get ing
-              curl -v https://solar-system-development.127.0.0.1.nip.io:32335
+
+              NODE_IP=$(kubectl get node github-lab-control-plane -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+
+              NODE_PORT=$(kubectl -n development get service solar-system -o jsonpath='{.spec.ports[0].nodePort}')
+
+              echo "Testing application at http://${NODE_IP}:${NODE_PORT}"
+              curl --fail --show-error --verbose \
+              --retry 10 --retry-connrefused --retry-delay 2 \
+              --connect-timeout 5 --max-time 15 \
+              "http://${NODE_IP}:${NODE_PORT}/"
+              
+#             curl -v https://solar-system-development.127.0.0.1.nip.io:32335
+
+
               
           - name: Diagnose image pull failure
             if: always()
