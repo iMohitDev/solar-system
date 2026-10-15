@@ -317,11 +317,11 @@ jobs:
 
           - name: Display Post deployment and secret
             run: |  
-              sleep 35s  
+              sleep 15s  
               kubectl -n development get all
               kubectl -n development get secrets
               kubectl -n development get ing
-              curl -v https://solar-system-development.127.0.0.1.nip.io:32245
+              curl -v https://solar-system-development.127.0.0.1.nip.io:32335
               
           - name: Diagnose image pull failure
             if: always()
