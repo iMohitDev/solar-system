@@ -206,7 +206,7 @@ jobs:
 
 
       dev-deploy:
-        name: Create Kubernetes Cluster
+        name: Create Kubernetes Cluster & Dev-deploy
         runs-on: ubuntu-latest
 
         env:
@@ -214,6 +214,9 @@ jobs:
           REPLICAS: ${{ vars.REPLICAS }}
           IMAGE: ${{ vars.DOCKER_USERNAME }}/solar-system:latest
 #          INGRESS_IP: ${{ env.INGRESS_IP }}
+
+        outputs:
+          APP_INGRESS_URL: ${{ steps.set-ingress-host.outputs.APP_INGRESS_HOST }}
 
         steps:
           
@@ -331,7 +334,7 @@ jobs:
               --retry 10 --retry-connrefused --retry-delay 2 \
               --connect-timeout 5 --max-time 15 \
               "http://${NODE_IP}:${NODE_PORT}/"
-              
+
 #             curl -v https://solar-system-development.127.0.0.1.nip.io:32335
 
 
@@ -342,6 +345,24 @@ jobs:
               NAMESPACE: ${{ vars.NAMESPACE }}
             run: |
               kubectl -n "$NAMESPACE" describe pods -l app=solar-system
+          
+          - name: Set App Ingress Host URL
+            id: set-ingress-host
+            run: |
+              echo "APP_INGRESS_HOST=$(kubectl -n ${{ vars.NAMESPACE }} \
+                get ingress -o jsonpath='{.items[0].spec.tls[0].hosts[0]}')" \
+                >> "$GITHUB_OUTPUT"
 
-
-              
+  
+      integration-testing:
+        name: Dev Integration Testing
+        needs: dev-deploy
+        runs-on: ubuntu-latest
+        steps:
+          - name: Test URL Output with curl and jq
+            env:
+              URL: ${{ needs.dev-deploy.outputs.APP_INGRESS_URL }}
+            run: |
+              echo "URL: $URL"
+              echo "-----------------------------------------"
+              curl https://$URL/live -s -k | jq -r .status | grep -i live
