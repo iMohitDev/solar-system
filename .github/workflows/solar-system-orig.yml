@@ -1,4 +1,4 @@
-name: Solar System Workflow ORIG
+name: Solar System Original Workflow
 
 on:
   workflow_dispatch:
