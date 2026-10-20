@@ -5,9 +5,9 @@ on:
 
 jobs:
   test-job:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Echo and Sleep
         run: |
           echo "Runner check: OK"
-          sleep 38s
+          sleep 5s
