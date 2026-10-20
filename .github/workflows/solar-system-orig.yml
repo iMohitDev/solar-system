@@ -2,21 +2,36 @@ name: Solar System Original Workflow
 
 on:
   workflow_dispatch:
-#   push:
+  push:
 #     branches:
 #       - main
 #       - 'feature/*'
 
 env:
   MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
-  MONGO_USERNAME: ${{ vars.MONGO_USERNAME  }}
-  MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+  # MONGO_USERNAME: ${{ vars.MONGO_USERNAME  }}
+  # MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 
 jobs:
-  test-job:
-    runs-on: ubuntu-latest
+  dev-deploy:
+    runs-on: self-hosted
     steps:
-      - name: Echo and Sleep
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Install kubectl CLI
+        uses: azure/setup-kubectl@v5
+        with:
+          version: '1.26.0'
+
+      - name: Set Kubeconfig Context
+        uses: azure/k8s-set-context@v5
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Fetch Kubernetes Cluster Details
         run: |
-          echo "Runner check: OK"
-          sleep 38s
+          kubectl version --short
+          echo "----------------------------------------------------------------"
+          kubectl get nodes
