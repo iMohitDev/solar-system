@@ -10,4 +10,4 @@ jobs:
       - name: Echo and Sleep
         run: |
           echo "Runner check: OK"
-          sleep 5s
+          sleep 4s
