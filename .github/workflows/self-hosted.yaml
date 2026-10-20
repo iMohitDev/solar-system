@@ -1,7 +1,7 @@
 name: Test Self-Hosted Runner
 on:
   workflow_dispatch:
-#   push:
+  push:
 
 jobs:
   test-job:
@@ -10,4 +10,4 @@ jobs:
       - name: Echo and Sleep
         run: |
           echo "Runner check: OK"
-          sleep 4s
+          sleep 5s
