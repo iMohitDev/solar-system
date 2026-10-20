@@ -66,6 +66,7 @@ jobs:
           echo "=== ingress.yaml ==="
           cat kubernetes/development/ingress.yaml
 
+          
       - name: Create MongoDB secret
         run: |
           kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
