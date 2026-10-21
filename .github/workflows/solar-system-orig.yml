@@ -14,9 +14,19 @@ env:
 
 jobs:
   dev-deploy:
+
     runs-on: self-hosted
+
+    # Variables for all steps:
     outputs:
       APP_INGRESS_URL: ${{ steps.set-ingress-host.outputs.APP_INGRESS_HOST }}
+
+    # Enforce your GitHub environment rules:
+      environment:
+      name: development
+      url: https://${{ steps.set-ingress-host-address.outputs.APP_INGRESS_HOST }}   
+      
+      
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
