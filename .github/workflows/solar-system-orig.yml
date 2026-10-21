@@ -24,7 +24,7 @@ jobs:
     # Enforce your GitHub environment rules:
     environment:
       name: development
-      url: https://${{ steps.set-ingress-host-address.outputs.APP_INGRESS_HOST }}   
+      url: https://${{ steps.set-ingress-host.outputs.APP_INGRESS_HOST }}   
       
       
     steps:
