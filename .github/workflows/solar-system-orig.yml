@@ -15,6 +15,8 @@ env:
 jobs:
   dev-deploy:
     runs-on: self-hosted
+    outputs:
+      APP_INGRESS_URL: ${{ steps.set-ingress-host.outputs.APP_INGRESS_HOST }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
@@ -79,6 +81,31 @@ jobs:
 
       - name: Deploy manifests
         run: kubectl apply -f kubernetes/development
+
+
+      - name: Set App Ingress Host URL
+        id: set-ingress-host
+        run: |
+          echo "APP_INGRESS_HOST=$(kubectl -n ${{ vars.NAMESPACE }} \
+            get ingress -o jsonpath='{.items[0].spec.tls[0].hosts[0]}')" \
+            >> "$GITHUB_OUTPUT"
+
+
+
+
+
+  integration-testing:
+    name: Dev Integration Testing
+    needs: [dev-deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test URL Output with curl and jq
+        env:
+          URL: ${{ needs.dev-deploy.outputs.APP_INGRESS_URL }}
+        run: |
+          echo "URL: $URL"
+          echo "-----------------------------------------"
+          curl http://$URL/live -s -k | jq -r .status | grep -i live      
         
 
       
